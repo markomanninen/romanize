@@ -4,6 +4,7 @@
 
 import re
 from collections import OrderedDict
+from romanizer import Romanizer
 
 data = OrderedDict()
 
@@ -65,7 +66,7 @@ data['delta'] = dict(letter=[u'δ'], name=u'δελτα', segment='consonant', su
 data['epsilon'] = dict(letter=[u'ε'], name=u'ε ψιλον', segment='vowel', subsegment='short', roman=u'e', order=5)
 # digamma/stigma/episemon/wau
 # http://en.wikipedia.org/wiki/Digamma
-data['digamma'] = dict(letter=[u'ϝ'], name=u'διγαμμα', segment='numeral', roman=u'w', order=6)
+data['digamma'] = dict(letter=[u'ϝ', u'ϛ'], name=u'διγαμμα', segment='numeral', subsegment='', roman=u'w', order=6)
 #data['stigma'] = dict(letter=[u'ϛ'], name=u'στιγμα', segment='numeral', roman=u'w')
 # zeta:http://en.wiktionary.org/wiki/ζῆτα
 data['zeta'] = dict(letter=[u'ζ'], name=u'ζητα', segment='consonant', subsegment='double', roman=u'z', order=7)
@@ -118,8 +119,10 @@ data['omega'] = dict(letter=[u'ω'], name=u'ω μεγα', segment='vowel', subse
 # http://www.tlg.uci.edu/~opoudjis/unicode/other_nonattic.html#sampi
 # http://www.parthia.com/fonts/sampi.htm
 # http://www.jstor.org/stable/636031
-data['sampi'] = dict(letter=[u'ϡ'], name=u'σαμπι', segment='numeral', subsegment='', roman=u'j', order=27)
+data['sampi'] = dict(letter=[u'ϡ', u'ͳ'], name=u'σαμπι', segment='numeral', subsegment='', roman=u'j', order=27)
 #data['disigma'] = dict(letter=[u'ϡ'], name=u'δισιγμα', segment='numeral', subsegment='', roman=u'j')
+
+r = Romanizer(data)
 
 # accents / diacritics for simplified greek letters
 
@@ -175,26 +178,12 @@ def preprocess(string):
     # remove all rest of the unwanted characters
     return regex2.sub('', string).encode('utf-8')
 
-# collect greek and roman letters from data dictionary for substitute dictionary
-substitutes = dict()
-for key, d in data.items():
-    # add roman letter substituting greek letters
-    for x in d['letter']:
-        substitutes[x] = d['roman']
-        substitutes[x.upper()] = d['roman'].upper()
-    # add the primary greek letter substituting roman letter
-    substitutes[d['roman']] = d['letter'][0]
-    substitutes[d['roman'].upper()] = d['letter'][0].upper()
-
-regex3 = re.compile('|'.join(substitutes.keys()))
-
 def convert(string, sanitize=False):
     """
-    Swap characters from greek to roman and vice versa. Optionally sanitize string by using preprocess function.
+    Swap characters from script to roman and vice versa. Optionally sanitize string by using preprocess function.
 
     :param sanitize:
     :param string:
     :return:
     """
-    string = unicode(preprocess(string) if sanitize else string, encoding="utf-8")
-    return regex3.sub(lambda x: substitutes[x.group()], string).encode('utf-8')
+    return r.convert(string, (preprocess if sanitize else False))
